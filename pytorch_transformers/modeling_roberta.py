@@ -23,6 +23,7 @@ import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn import CrossEntropyLoss
 
 from pytorch_transformers.modeling_bert import (BertConfig, BertEmbeddings,
                                                 BertLayerNorm, BertModel,
@@ -58,11 +59,12 @@ class RobertaEmbeddings(BertEmbeddings):
             # cf. fairseq's `utils.make_positions`
             position_ids = torch.arange(self.padding_idx+1, seq_length+self.padding_idx+1, dtype=torch.long, device=input_ids.device)
             position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
-        return super().forward(input_ids, token_type_ids=token_type_ids, position_ids=position_ids)
+        return super(RobertaEmbeddings, self).forward(input_ids, token_type_ids=token_type_ids, position_ids=position_ids)
 
 
 class RobertaConfig(BertConfig):
     pretrained_config_archive_map = ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP
+
 
 class RobertaModel(BertModel):
     """
@@ -78,7 +80,7 @@ class RobertaModel(BertModel):
         super(RobertaModel, self).__init__(config)
 
         self.embeddings = RobertaEmbeddings(config)
-
+        self.apply(self.init_weights)
 
 
 class RobertaForMaskedLM(BertPreTrainedModel):
@@ -94,27 +96,42 @@ class RobertaForMaskedLM(BertPreTrainedModel):
 
         self.roberta = RobertaModel(config)
         self.lm_head = RobertaLMHead(config)
+
+        self.apply(self.init_weights)
+        self.tie_weights()
+
+    def tie_weights(self):
+        """ Make sure we are sharing the input and output embeddings.
+            Export to TorchScript can't handle parameter sharing so we are cloning them instead.
+        """
+        self._tie_or_clone_weights(self.lm_head.decoder, self.roberta.embeddings.word_embeddings)
     
-    def forward(self, input_ids, token_type_ids=None, attention_mask=None, position_ids=None, head_mask=None):
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None, masked_lm_labels=None, position_ids=None,
+                head_mask=None):
         outputs = self.roberta(input_ids, position_ids=position_ids, token_type_ids=token_type_ids,
                             attention_mask=attention_mask, head_mask=head_mask)
         sequence_output = outputs[0]
         prediction_scores = self.lm_head(sequence_output)
 
         outputs = (prediction_scores,) + outputs[2:]
-        return outputs
 
+        if masked_lm_labels is not None:
+            loss_fct = CrossEntropyLoss(ignore_index=-1)
+            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.config.vocab_size), masked_lm_labels.view(-1))
+            outputs = (masked_lm_loss,) + outputs
+
+        return outputs
 
 
 class RobertaLMHead(nn.Module):
     """Roberta Head for masked language modeling."""
 
-    def __init__(self, config: BertConfig):
-        super().__init__()
+    def __init__(self, config):
+        super(RobertaLMHead, self).__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.layer_norm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
-        self.weight = nn.Linear(config.hidden_size, config.vocab_size, bias=False).weight
+        self.decoder = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
         self.bias = nn.Parameter(torch.zeros(config.vocab_size))
 
     def forward(self, features, **kwargs):
@@ -123,6 +140,6 @@ class RobertaLMHead(nn.Module):
         x = self.layer_norm(x)
 
         # project back to size of vocabulary with bias
-        x = F.linear(x, self.weight) + self.bias
+        x = self.decoder(x) + self.bias
 
         return x
