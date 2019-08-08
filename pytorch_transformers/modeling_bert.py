@@ -184,7 +184,7 @@ class BertConfig(PretrainedConfig):
     pretrained_config_archive_map = BERT_PRETRAINED_CONFIG_ARCHIVE_MAP
 
     def __init__(self,
-                 vocab_size_or_config_json_file=30522,
+                 vocab_size_or_config_json_file=18000,
                  hidden_size=768,
                  num_hidden_layers=12,
                  num_attention_heads=12,
@@ -192,7 +192,7 @@ class BertConfig(PretrainedConfig):
                  hidden_act="gelu",
                  hidden_dropout_prob=0.1,
                  attention_probs_dropout_prob=0.1,
-                 max_position_embeddings=512,
+                 max_position_embeddings=513,
                  type_vocab_size=2,
                  initializer_range=0.02,
                  layer_norm_eps=1e-12,
