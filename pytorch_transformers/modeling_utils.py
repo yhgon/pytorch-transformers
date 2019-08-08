@@ -247,7 +247,7 @@ class PreTrainedModel(nn.Module):
 
             - ``base_model_prefix``: a string indicating the attribute associated to the base model in derived classes of the same architecture adding modules on top of the base model.
     """
-    config_class = None
+    config_class = BertConfig.from_json_file('/content/ERNIE_20/config.json')
     pretrained_model_archive_map = {}
     load_tf_weights = lambda model, config, path: None
     base_model_prefix = ""
