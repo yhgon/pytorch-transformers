@@ -177,6 +177,7 @@ class PretrainedConfig(object):
 
         # Load config
         config = cls.from_json_file(resolved_config_file)
+        print("DEBUG PretrainedConfig.from_pretrained check it 180 line") # debug
 
         # Update config with kwargs if needed
         to_remove = []
@@ -426,8 +427,10 @@ class PreTrainedModel(nn.Module):
                 cache_dir=cache_dir, return_unused_kwargs=True,
                 **kwargs
             )
+            print("DEBUG PreTrainedModel.from_pretrained check it 429 line") # debug
         else:
             model_kwargs = kwargs
+            print("DEBUG PreTrainedModel.from_pretrained check it 429 line") # debug
 
         # Load model
         if pretrained_model_name_or_path in cls.pretrained_model_archive_map:
