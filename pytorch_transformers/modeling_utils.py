@@ -148,8 +148,10 @@ class PretrainedConfig(object):
             config_file = cls.pretrained_config_archive_map[pretrained_model_name_or_path]
         elif os.path.isdir(pretrained_model_name_or_path):
             config_file = os.path.join(pretrained_model_name_or_path, CONFIG_NAME)
+            print(" DEBUG : model_util_150  check config_file",config_file) ## DEBUG
         else:
             config_file = pretrained_model_name_or_path
+            print(" DEBUG : model_util_150  check config_file",config_file) ## DEBUG
         # redirect to the cache, if necessary
         try:
             resolved_config_file = cached_path(config_file, cache_dir=cache_dir)
