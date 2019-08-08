@@ -198,6 +198,7 @@ class BertConfig(PretrainedConfig):
         if isinstance(vocab_size_or_config_json_file, str) or (sys.version_info[0] == 2
                         and isinstance(vocab_size_or_config_json_file, unicode)):
             with open(vocab_size_or_config_json_file, "r", encoding='utf-8') as reader:
+                print("try to load config file", vocab_size_or_config_json_file) ## DEBUG
                 json_config = json.loads(reader.read())
             for key, value in json_config.items():
                 self.__dict__[key] = value
