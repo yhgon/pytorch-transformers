@@ -507,6 +507,7 @@ class PreTrainedModel(nn.Module):
 
         def load(module, prefix=''):
             local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
+            print("DEBUG load line 510 print module", module ) 
             module._load_from_state_dict(
                 state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs)
             for name, child in module._modules.items():
@@ -520,7 +521,8 @@ class PreTrainedModel(nn.Module):
             start_prefix = cls.base_model_prefix + '.'
         if hasattr(model, cls.base_model_prefix) and not any(s.startswith(cls.base_model_prefix) for s in state_dict.keys()):
             model_to_load = getattr(model, cls.base_model_prefix)
-
+            
+        print("DEBUG PreTrainedModel.from_pretrained line 524 print model",model_to_load ) 
         load(model_to_load, prefix=start_prefix)
         if len(missing_keys) > 0:
             logger.info("Weights of {} not initialized from pretrained model: {}".format(
