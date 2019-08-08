@@ -540,7 +540,8 @@ class BertPreTrainedModel(PreTrainedModel):
     """ An abstract class to handle weights initialization and
         a simple interface for dowloading and loading pretrained models.
     """
-    config_class = BertConfig
+    #config_class = BertConfig
+    config_class = BertConfig.from_pretrained('/content/ERNIE_20/')
     pretrained_model_archive_map = BERT_PRETRAINED_MODEL_ARCHIVE_MAP
     load_tf_weights = load_tf_weights_in_bert
     base_model_prefix = "bert"
